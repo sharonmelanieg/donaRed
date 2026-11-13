@@ -1,27 +1,20 @@
 import express from 'express';
-
-const app = express();
-
-app.use(express.json());
+import { users } from '../data/usuarios.js';
+const userRouter = express.Router();
 
 
-app.use((req, res, next) => {
+userRouter.use((req, res, next) => {
     console.log(`📦 Middleware → ${req.method} ${req.url}`);
-  next(); // ¡Importante! next() continúa hacia la siguiente función o ruta.
+    next(); 
 });
 
-// Datos de ejemplo (simulando una base de datos)
-const users = [
-    { id: 1, name: 'Ana' , producto:'mochila'},
-    { id: 2, name: 'Luis', producto:'cuaderno'},
-    { id: 3, name: 'Carla', producto:'cartuchera'},
-    ];
 
-app.get('/usuarios', (req, res) => {
+
+userRouter.get('/usuarios', (req, res) => {
     res.send(users);
 });
 
-app.patch('/usuarios/:id', (req, res) => {
+userRouter.patch('/usuarios/:id', (req, res) => {
     const id=parseInt(req.params.id)
     const usuario=users.find(user => user.id===id)
     if (!usuario) {
@@ -33,7 +26,7 @@ app.patch('/usuarios/:id', (req, res) => {
     res.json(usuario)
 
 })
-app.post('/miCuenta', (req, res) => {
+userRouter.post('/miCuenta', (req, res) => {
     const nuevoUsuario = req.body;
     console.log("Nuevo usuario: ", nuevoUsuario);
     if (!nuevoUsuario || Object.keys(nuevoUsuario).length === 0) {
@@ -46,7 +39,7 @@ app.post('/miCuenta', (req, res) => {
     res.status(201).json(users);
 });
 
-app.delete('/miCuenta/:id', (req, res) => {
+userRouter.delete('/miCuenta/:id', (req, res) => {
     const idUsuario=parseInt(req.params.id)
     const miCuenta=users.findIndex(usuario=> usuario.id=== idUsuario)
     if (miCuenta==-1) {
@@ -56,3 +49,5 @@ app.delete('/miCuenta/:id', (req, res) => {
     res.json({users: users});
     
 })
+
+export default userRouter;

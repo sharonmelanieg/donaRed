@@ -1,3 +1,9 @@
 node_modules
 postman
 .postman
+postman
+package
+package-lock.json
+
+supabase.js
+.env

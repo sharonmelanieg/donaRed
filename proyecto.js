@@ -1,48 +1,27 @@
 import express from 'express';
-
+import userRouter from './router/usuariosRouter.js';
+import publicacionRouter from './router/publicacionesRouter.js';
 const app = express();
 
 app.use(express.json());
 
-//realizar un crud: 
-// c: create --> POST
-// r: read--> con este usamos el GET 
-// u: update --> PUT -- PATCH. put modifica todo lo que contiene y el patch solo lo que necesitas puntualmente
-// d: delete --> DELETE
-
-
 
 app.use((req, res, next) => {
     console.log(`📦 Middleware → ${req.method} ${req.url}`);
-  next(); // ¡Importante! next() continúa hacia la siguiente función o ruta.
+    next();
 });
 
 
-
-// Datos de ejemplo (simulando una base de datos)
-
-
-/* Nuevo usuario
-{
-    "name": "Pedro",
-    "producto": "Lapicera",
-    "estado": "reservado"
-}
-*/
-
-
-
+app.use('/api', userRouter);
+app.use('/api', publicacionRouter)
 
 app.get('/', (req, res) => {
-    res.json(donaciones)
-})
-
-
+    res.send('🏠 Bienvenido! Visitá /api/users para probar el router.');
+});
 
 
 const PORT = 3000;
+
 app.listen(PORT, () => {
     console.log(`✅ Servidor Express corriendo en http://localhost:${PORT}`);
 });
-
-

@@ -55,16 +55,17 @@ reservas.patch('/reservas/:id', (req, res) => {
                 mensaje: "Debes enviar los datos del producto a reservar"
             })
         }
+        //primero aca tengo que verificar que datos realmento quiero cambiar para no modificar todo
+        //
+        if (condition) {
+            
+        }
         Object.assign(reservasProductos, req.body)
         res.json(reservasProductos)
 
 
 })
-reservas.delete('/reservas/:id', (req, res) => {
-
-
-
-});
+//no uso un delete porque realmente cambia de estado las publicianes de estado publicado a reservadio
 
 
 //realizar un crud: 

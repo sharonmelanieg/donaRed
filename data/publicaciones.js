@@ -43,3 +43,11 @@ export const donaciones=[
         usuarioId: 2
     }
 ]
+
+const camposPermitidos = [
+    'titulo',
+    'descripcion',
+    'categoria',
+    'imagen',
+    'ubicacion'
+];

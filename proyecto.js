@@ -1,6 +1,7 @@
 import express from 'express';
 import userRouter from './router/usuariosRouter.js';
 import publicacionRouter from './router/publicacionesRouter.js';
+import reservasRouter from './router/reservasRouter.js';
 const app = express();
 
 app.use(express.json());
@@ -12,11 +13,12 @@ app.use((req, res, next) => {
 });
 
 
-app.use('/api', userRouter);
-app.use('/api', publicacionRouter)
+app.use('/api/usuarios', userRouter);
+app.use('/api/publicaciones', publicacionRouter);
+app.use('/api/reservas', reservasRouter);
 
 app.get('/', (req, res) => {
-    res.send('🏠 Bienvenido! Visitá /api/users para probar el router.');
+    res.send('🏠 Bienvenido! Visitá /api/usuarios para probar el router.');
 });
 
 

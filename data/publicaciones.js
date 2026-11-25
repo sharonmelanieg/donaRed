@@ -44,7 +44,7 @@ export const donaciones=[
     }
 ]
 
-const camposPermitidos = [
+export const camposPermitidos = [
     'titulo',
     'descripcion',
     'categoria',

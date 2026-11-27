@@ -51,3 +51,16 @@ export const camposPermitidos = [
     'imagen',
     'ubicacion'
 ];
+
+export categoria=[
+    "Ropa y calzado",
+    "Libros y utiles",
+    "Hogar",
+    "Electrónica",
+    "Juguetes",
+    "Deportes",
+    "Higiene y cuidado personal",
+    "Otros"
+
+]
+export default categoria;

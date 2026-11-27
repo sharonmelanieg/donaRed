@@ -2,6 +2,7 @@ import express from 'express';
 import { users } from '../data/usuarios.js';
 import { donaciones } from '../data/publicaciones.js';
 import { camposPermitidos } from '../data/publicaciones.js'
+import { publicacion, publicacionDisponibles, publicacionReservada,publicacionCategoria, modificarPublicacion, eliminarPublicacion} from "../baseDeDatos/publicacion.js";
 
 const publicacionRouter = express.Router();
 
@@ -13,142 +14,145 @@ publicacionRouter.use((req, res, next) => {
 });
 
 
-
-
 publicacionRouter.get('/', (req, res) => {
-    res.send(donaciones);
+    try {
+        const publicaciones= await publicacion();
+        res.status(201).json({ publicaciones});
+    } catch (error) {
+        console.error("Error:", error.message);
+
+        res.status(500).json({mensaje: "Error al obtener todos las publicaciones"});
+        
+    };
 });
-publicacionRouter.get('/disponibles', (req, res) => {
-    const publicacionesDisponibles = donaciones.filter(publicacion => publicacion.estado === "disponible");
-    res.json(publicacionesDisponibles);
+publicacionRouter.get('/disponibles', async(req, res) => {
+    try {
+        const disponible= await publicacionDisponibles();
+        res.status(201).json({ publicaciones});  
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(500).json({mensaje: "Error al obtener todos las publicaciones disponibles"});
+    }
 });
-publicacionRouter.get('/usuario/:usuarioId', (req, res) => {
-    const usuarioId = Number(req.params.usuarioId);
-    const publicacionesUsuario = donaciones.filter(publicacion => publicacion.usuarioId === usuarioId);
-    res.json(publicacionesUsuario);
+
+publicacionRouter.get('/reservadas', async(req, res) => {
+    try {
+        const reservada= await publicacionReservada();
+        res.status(201).json({ reservada});  
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(500).json({mensaje: "Error al obtener todos las publicaciones disponibles"});
+    }
 });
-publicacionRouter.get('/categoria/:categoria', (req, res) => {
-    const categoria = req.params.categoria;
-    const publicacionesCategoria = donaciones.filter( publicacion => publicacion.categoria.toLowerCase() === categoria.toLowerCase());
-    res.json(publicacionesCategoria);
+
+//VERIFICAR BIEN COMO HACERLO
+publicacionRouter.get('/usuario/:usuarioId', async(req, res) => {
+    try {
+        const publicacion=await publicacionPorUsuario(req.params.usuarioId)
+        res.status(200).json(publicacion)
+        
+    } catch (error) {
+         console.error("Error:", error.message);
+        res.status(500).json({mensaje: "Error al obtener todos las publicaciones de ese usuario"});
+    }
+});
+publicacionRouter.get('/categoria/:categoria', async(req, res) => {
+    try {
+        const categoria = req.params.categoria;
+        const publicacionesCategoria = await publicacionCategoria(categoria);
+        res.status(201).json({ publicacionesCategoria});
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(500).json({mensaje: "Error al obtener todos las publicaciones de esa categoria"});
+    }
 });
 publicacionRouter.get('/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    const publicacion = donaciones.find(donacion => donacion.id === id);
-    if (!publicacion) {
-        return res.status(404).json({ mensaje: "Publicacion no encontrada" });
+    try {
+        const id=req.params.id;
+        const publicacionId= await publicacionesPorId(id);
+        res.status(500).json(publicacionId);
+
+    } catch (error) {
+         console.error("Error:", error.message);
+        res.status(500).json({mensaje: "Error al obtener la publicacion de ese ID"});
     }
-    res.json(publicacion);
 });
 
 
 
 
 
-publicacionRouter.post('/', (req, res) => {
-    const {titulo, descripcion, categoria, imagen, ubicacion } = req.body;
-   
-     if (!titulo || !descripcion || !categoria || !ubicacion) {
-        return res.status(400).json({
-            mensaje: "Debes completar el título, descripción, categoría y ubicación"
+publicacionRouter.post('/', async(req, res) => {
+    try {
+        const {titulo, descripcion, categoria, imagen, ubicacion } = req.body;
+        if (!titulo || !descripcion || !categoria || !ubicacion) {
+                return res.status(400).json({
+                    mensaje: "Debes completar el título, descripción, categoría y ubicación"
+                });
+            }
+          const nuevaPublicacion = await crearPublicacion({
+            titulo,
+            descripcion,
+            categoria,
+            ubicacion,
+            usuario_id,
+            estado: "disponible"
         });
-    }
-    const idUsuario = Number(usuarioId);
-     if (!Number.isInteger(idUsuario) || idUsuario <= 0) {
-        return res.status(400).json({
-            mensaje: "El usuario indicado no es válido"
+
+        res.status(201).json({
+            mensaje: "Publicación creada correctamente",
+            publicacion: nuevaPublicacion
         });
-    }
-
-    // 5. Buscamos si existe el usuario
-    const usuario = users.find(user => user.id === idUsuario);
-
-    if (!usuario) {
-        return res.status(404).json({
-            mensaje: "El usuario no existe"
-        });
-    }
-
-    // 6. Creamos la nueva publicación
-    const nuevaDonacion = {
-        id: Math.max(0, ...donaciones.map(donacion => donacion.id)) + 1,
-        titulo,
-        descripcion,
-        categoria,
-        imagen: imagen || null,
-        ubicacion,
-        usuarioId: idUsuario,
-        estado: "publicada"
-    };
-
-    // 7. Guardamos la publicación en el array
-    donaciones.push(nuevaDonacion);
-
-    // 8. Respondemos que se creó correctamente
-    res.status(201).json({
-        mensaje: "Publicación creada correctamente",
-        publicacion: nuevaDonacion
-    });
-});
 
 
-publicacionRouter.patch('/:id', (req, res) => {
-    const id = Number(req.params.id);
-    
-    const donacion = donaciones.find(producto => producto.id === id);
-    if (!donacion) {
-        return res.status(404).json({mensaje: "La publicación no existe"});
-    }
-   
-    const camposRecibidos = Object.keys(req.body);
-    
- //QUE HACE EL SOME? lo que hace es recorrer el array de camposRecibidos y verifica si alguno de 
-    // los campos recibidos no está incluido en el array de camposPermitidos.
-    if (camposRecibidos.length === 0 || camposRecibidos.some(campo => !camposPermitidos.includes(campo))) {
-    return res.status(400).json({
-        mensaje: "No envíaste campos válidos para modificar"
-    });
+    } catch (error) {
+        console.error(error.message);
+        res.status(400).json({mensaje: error.message});
 }
-//aca lo que hace el Object.assign(donacion, req.body) es tomar el objeto donacion y actualizar 
-// sus propiedades con los valores del objeto req.body.
-    Object.assign(donacion, req.body);
-    res.json({
-    mensaje: "Publicación modificada correctamente",
-    publicacion: donacion
     });
+    
+   
+
+publicacionRouter.patch('/:id', async(req, res) => {
+    try {
+      const id=req.params.id;
+      const camposPermitidos=Object.keys(req.body)
+      const modificar=await modificarPublicacion(id, camposPermitidos)
+       if (camposRecibidos.length === 0 || camposRecibidos.some(campo =>!camposPermitidos.includes(campo))) 
+        {
+            return res.status(400).json({
+                mensaje: "No enviaste campos válidos para modificar"
+            });
+        }
+
+        const publicacion = await modificarPublicacion(req.params.id,req.body);
+        res.status(200).json({
+            mensaje: "Publicación modificada correctamente",
+            publicacion
+        });
+
+    } catch (error) {
+        res.status(400).json({
+            mensaje: error.message
+        });
+    }
+    
 })
 
-publicacionRouter.delete('/:id', (req, res) => {
-    const idProducto=parseInt(req.params.id)
-    const publicacion=donaciones.findIndex(producto=> producto.id=== idProducto)
-    if (publicacion==-1) {
-        return res.status(404).json({
-            mensaje: "Error en eliminar la publicacion"
-        })}
-    donaciones.splice(publicacion,1)
-    res.json({donaciones: donaciones});
-    
-    
-
+publicacionRouter.delete('/:id', async(req, res) => {
+    try {
+        const id= req.params.id;
+        const eliminar= await eliminarPublicacion;
+        res.status(200).json({ 
+        mensaje: "Usuario eliminado correctamente",
+        eliminar
+    });
+    } catch (error) {
+    console.error("Error:", error.message);
+    res.status(400).json({mensaje: error.message});
+    }
 })
 export default publicacionRouter;
 
 
 
-/*Endpoints DE PUBLICACIONES
-Método	Endpoint	Función
-
-
-
-PUT	/publicaciones/:id	Modificar una publicación
-DELETE	/publicaciones/:id	Eliminar una publicación
-
-También agregaría:
-Método	Endpoint	Función
-GET	/publicaciones/disponibles	Mostrar objetos disponibles
-GET	/publicaciones/usuario/:usuarioId	Mostrar publicaciones de un usuario
-GET	/publicaciones/categoria/:categoria	Filtrar por categoría
-
-
-
-*/

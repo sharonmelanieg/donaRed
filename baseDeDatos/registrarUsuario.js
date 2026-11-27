@@ -1,16 +1,31 @@
-async function iniciarSesion(email, password) {
 
-const { data, error } = await supabase.auth.signInWithPassword({
-    email: email,
-    password: password
-})
+import supabase from '../config/supabase.js';
 
-if (error) {
-    console.log("Error:", error.message)
-    return
+export async function registrarUsuarios(nombre, email, password) {
+    const { data, error } = await supabase.auth.signUp({
+        email,
+        password
+    });
+
+    if (error) {
+        throw error;
+    }
+
+    if (data.user) {
+        const { error: errorPerfil } = await supabase
+            .from('usuarios')
+            .insert({
+                id: data.user.id,
+                nombre,
+                email
+            });
+
+        if (errorPerfil) {
+            throw errorPerfil;
+        }
+    }
+
+    return data.user;
 }
 
-console.log("Inicio de sesión exitoso")
-console.log(data.user)
 
-}

@@ -1,5 +1,7 @@
 import express from 'express';
-import { users } from '../data/usuarios.js';
+import {registrarUsuarios} from "../baseDeDatos/registrarUsuario.js";
+import {publicaciones } from "../baseDeDatos/loginUsuarios.js";
+import {todosLosUsuarios, modificarUsuario, eliminarUsuario} from "../baseDeDatos/usuarios.js";
 const userRouter = express.Router();
 
 
@@ -10,44 +12,90 @@ userRouter.use((req, res, next) => {
 
 
 
-userRouter.get('/usuarios', (req, res) => {
-    res.send(users);
+userRouter.get('/usuarios', async(req, res) => {
+    try {
+        const todosUsuarios= await usuario();
+        res.status(201).json({ todosLosUsuarios});
+
+    } catch (error) {
+         console.error("Error:", error.message);
+
+        res.status(500).json({mensaje: "Error al obtener todos los usuarios"});
+    }
 });
 
-userRouter.patch('/usuarios/:id', (req, res) => {
-    const id=parseInt(req.params.id)
-    const usuario=users.find(user => user.id===id)
-    if (!usuario) {
-        return res.status(400).json({
-            mensaje: "Debes enviar los datos del pedido"
-        })
+userRouter.patch('/usuarios/:id', async(req, res) => {
+    try {
+        const id= req.params.id;
+        const modificaUsuario= await modificarUsuario(id);
+        res.status(200).json({
+            mensaje: "Usuario modificado correctamente",
+            usuario: nuevoUsuario
+        });
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(400).json({mensaje: error.message});
     }
-    Object.assign(usuario, req.body)
-    res.json(usuario)
 
 })
-userRouter.post('/miCuenta', (req, res) => {
-    const nuevoUsuario = req.body;
-    console.log("Nuevo usuario: ", nuevoUsuario);
-    if (!nuevoUsuario || Object.keys(nuevoUsuario).length === 0) {
-        return res.status(400).json({
-            mensaje: "Debes enviar los datos del pedido"
+userRouter.post('/registrarse', async (req, res) => {
+     try {
+        const { nombre, email, password } = req.body;
+
+        if (!nombre || !email || !password) {
+            return res.status(400).json({mensaje: "Debes completar todos los campos"});
+        }
+
+        const nuevoUsuario = await registrarUsuarios(nombre,email,password);
+
+        res.status(201).json({
+            mensaje: "Usuario registrado correctamente",
+            usuario: nuevoUsuario
         });
+
+    } catch (error) {
+
+        console.error("Error:", error.message);
+
+        res.status(400).json({mensaje: error.message});
     }
-    nuevoUsuario.id = users.length + 1;
-    users.push(nuevoUsuario);
-    res.status(201).json(users);
 });
 
-userRouter.delete('/miCuenta/:id', (req, res) => {
-    const idUsuario=parseInt(req.params.id)
-    const miCuenta=users.findIndex(usuario=> usuario.id=== idUsuario)
-    if (miCuenta==-1) {
-        return res.status(400).json({mensaje: "Error en eliminar la cuenta"
-        })}
-    users.splice(miCuenta,1)
-    res.json({users: users});
+userRouter.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+         if (!email || !password) {
+            return res.status(400).json({mensaje: "Debes completar los campos"});
+        }
+         const data = await loginUsuarios(email, password);
+         res.status(200).json({
+            mensaje: "Inicio de sesión exitoso",
+            usuario: data.user,
+            token: data.session.access_token
+        });
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(400).json({mensaje: error.message});
+        
+    }
+
+});
+
+
+userRouter.delete('/login/:id', async (req, res) => {
+   try {
+    const id= req.params.id;
+    const eliminar= await eliminarUsuario;
+    res.status(200).json({ 
+        mensaje: "Usuario eliminado correctamente",
+        eliminar
+    });
+   } catch (error) {
+    console.error("Error:", error.message);
+    res.status(400).json({mensaje: error.message});
+   }
     
 })
+
 
 export default userRouter;

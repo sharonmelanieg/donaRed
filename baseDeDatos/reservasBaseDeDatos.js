@@ -39,8 +39,8 @@ export async function reservasPorUsuario(usuarioId) {
 
 export async function crearPublicacion(reservas) {
 const { data, error } = await supabase
-        .from('publicaciones')
-        .insert(publicaciones)
+        .from('reservas')
+        .insert(reservas)
         .select()
         .single()
 
